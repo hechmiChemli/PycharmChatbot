@@ -25,7 +25,7 @@ def nom_president(files_names):
         for caractere in filename:
             if (caractere < 'a' or caractere > 'z') and (caractere < 'A' or caractere > 'Z'):
                 filename = filename.replace(caractere, '')
-        president.append(filename)
+    president.append(filename)
 
 
 def prenom(president_names):
