@@ -1,13 +1,14 @@
-import os
 
+import os
+import math
 
 def list_of_files(directory, extension):
+    # Création d'une liste pour stocker les noms de fichiers avec l'extension spécifiée
     files_names = []
     for filename in os.listdir(directory):
         if filename.endswith(extension):
             files_names.append(filename)
     return files_names
-
 
 # Appel de la fonction
 directory = "speeches"
@@ -16,8 +17,8 @@ files_names = list_of_files(directory, "txt")
 # Affichage de la liste des fichiers
 print(files_names)
 
-
 def nom_president(files_names):
+    # Liste pour stocker les noms de présidents extraits des noms de fichiers
     president = []
     for filename in files_names:
         filename = filename.replace('Nomination_', '')
@@ -25,10 +26,16 @@ def nom_president(files_names):
         for caractere in filename:
             if (caractere < 'a' or caractere > 'z') and (caractere < 'A' or caractere > 'Z'):
                 filename = filename.replace(caractere, '')
-    president.append(filename)
+        president.append(filename)
+    return president
 
+# Appel de la fonction nom_president
+files_names = list_of_files(directory, "txt")
+nom_president(files_names)
+  # Ajout de cette ligne pour afficher la liste des présidents
 
 def prenom(president_names):
+    # Dictionnaire associant les noms de président à leurs prénoms respectifs
     president_f_name = {
         'Chirac': 'Jacques',
         'Giscard': 'Valéry',
@@ -36,71 +43,133 @@ def prenom(president_names):
         'Macron': 'Emmanuel',
         'Sarkozy': 'Nicolas'
     }
+    # Utilisation d'une compréhension de liste pour créer une liste des prénoms complets
     return [name + ' ' + president_f_name[name] for name in president_names]
 
-
-
-
-
+# Appel de la fonction prenom avec la liste des noms de présidents
+president_first_names = prenom(nom_president())
+print(president_first_names)
 
 def minuscule(dossier_entree, dossier_sortie):
-    # parcourir tout les fichiers de dossier_entree(speeches)
+    # Parcourir tous les fichiers dans le dossier d'entrée (speeches)
     for fichier in os.listdir(dossier_entree):
-        # creatiion d'un fichier entree prenant les informations de fichier
-        fichier_entree = os.path.join(dossier_entree,
-                                      fichier)  # est une méthode en Python qui est utilisée pour joindre différents composants d'un chemin de fichier ou de répertoire de manière à ce qu'ils soient correctement concaténés join va permettre de joindre le fichier dans le dossier
-
-        with open(fichier_entree, 'r') as file:  # ouvrir fichier_entre en l'appelant file#indentation?
+        # Création du chemin complet pour le fichier d'entrée
+        fichier_entree = os.path.join(dossier_entree, fichier)
+        with open(fichier_entree, 'r') as file:
             contenu = file.read()
             contenu_min = ""
             for caractere in contenu:
                 if 65 <= ord(caractere) <= 90:
-                    contenu_min = chr(
-                        ord(caractere) + 32)  # variable contant un chaine de caractere qui contoient les valeurs
-                    # minuscules
+                    contenu_min += chr(ord(caractere) + 32)
                 else:
-                    contenu_min = contenu_min + caractere
+                    contenu_min += caractere
+            # Création du chemin complet pour le fichier de sortie
             fichier_sortie = os.path.join(dossier_sortie, fichier)
             with open(fichier_sortie, 'w') as file:
                 file.write(contenu_min)
 
+# Appel de la fonction minuscule
+dossier_entree = "speeches"
+dossier_sortie = "cleaned"  # Modification du dossier_sortie selon vos commentaires
+minuscule(dossier_entree, dossier_sortie)
 
 def cleaned(dossier):
+    # Parcourir tous les fichiers dans le dossier spécifié
     for fichier in os.listdir(dossier):
-        # creatiion d'un fichier entree prenant les informations de fichier
+        # Création du chemin complet pour le fichier d'entrée
         fichier_entree = os.path.join(dossier, fichier)
-
-        with open(fichier_entree, 'r') as file:  # (sorte de boucle)reouvrant un fichier et fait ces instructions
-            contenu = file.read()  # lire le fichier pour pouvoir extraire les infos
-            new_content = ""  # nouveaux chaine de caractere qui contiendra le contenu du fichier sans les ponctuatuoiob
-
-            for caractere in file:
-                if caractere == "," or caractere == ";" or caractere == "." or caractere == ":" or caractere == "?" or caractere == "!":
-                    new_content = new_content + ''
-                # rempacer les caracteres (' saut de ligne\n -)par des espaces
-                elif caractere == "\n" or caractere == "." or caractere == "'":
-                    new_content = new_content + ' '
-
-                else:  # sinon on ajoute le caractere sans les ponctuation
+        with open(fichier_entree, 'r') as file:
+            contenu = file.read()
+            new_content = ""
+            for caractere in contenu:
+                if caractere in [',', ';', '.', ':', '?', '!']:
+                    new_content += ''
+                elif caractere in ['\n', '.', "'"]:
+                    new_content += ' '
+                else:
                     new_content += caractere
+            # Réécrire le fichier avec le contenu nettoyé
             with open(fichier_entree, 'w') as file:
                 file.write(new_content)
 
+# Appel de la fonction cleaned
+dossier = "cleaned"  # Modification du dossier selon vos commentaires
+cleaned(dossier)
 
 def tf_score(dossier):
+    # Liste pour stocker les dictionnaires de scores TF pour chaque fichier
     liste_tf = []
     for fichier in os.listdir(dossier):
-        # creatiion d'un fichier entree prenant les informations de fichier
         fichier_entree = os.path.join(dossier, fichier)
-        with open(fichier_entree, 'r') as file:  # ouvrir fichier_entre en l'appelant file#indentation?
+        with open(fichier_entree, 'r') as file:
             contenu = file.read()
-            contenu = contenu.split()  # separer les mots de la chaine de caractere en une listge
+            contenu = contenu.split()
             dico = {}
-            for caractere in contenu:
-                if caractere not in dico:
-                    dico[caractere] = 0
+            for mot in contenu:
+                if mot not in dico:
+                    dico[mot] = 0
                 else:
-                    dico[caractere] += 1
+                    dico[mot] += 1
             liste_tf.append(dico)
     return liste_tf
+
+# Appel de la fonction tf_score
+dossier_tf = "cleaned"  # Modification du dossier selon vos commentaires
+resultat_tf = tf_score(dossier_tf)
+print(resultat_tf)
+
+def idf(dossier):
+    dico = {}
+    total_doc = len(os.listdir(dossier))
+    for fichier in os.listdir(dossier):
+        with open(os.path.join(dossier, fichier), 'r') as file:
+            contenu = file.read()
+            mots = set(contenu.split())
+            for mot in mots:
+                if mot not in dico:
+                    dico[mot] = 0
+                else:
+                    dico[mot] += 1
+    dico_idf = {}
+    for mot, valeur in dico.items():
+        dico_idf[mot] = math.log10(total_doc / (valeur + 1))
+    print(dico_idf)
+    return dico_idf
+
+# Appel de la fonction idf
+dossier_idf = "cleaned"  # Modification du dossier selon vos commentaires
+resultat_idf = idf(dossier_idf)
+print(resultat_idf)
+
+
+
+
+
+def tf_idf(dossier, filepath=None):
+    idf_score=idf(dossier)
+    tf_idf={}
+    for filename in os.listdir(dossier):
+        filepatn=os.path.join(directory,filename)
+        with open(filepath,'r',enconding='utf-8') as file:
+            contenu=file.read()
+        tf_s=tf_score(contenu)
+        tf_idf[filename]={}
+        for mot,tf in tf_s.items():
+            idf=idf_score.get(mot,1)
+            tfidf=tf*math.log(len(tf_idf)/idf)
+            tf_idf[filename][mot]=tfidf
+    return tf_idf
+
+
+
+
+
+
+
+
+
+
+
+
+
 
