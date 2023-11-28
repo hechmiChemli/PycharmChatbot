@@ -1,8 +1,6 @@
 import math
 import os
 
-
-
 def list_of_files(directory, extension):
     # Création d'une liste pour stocker les noms de fichiers avec l'extension spécifiée
     files_names = []
@@ -17,7 +15,6 @@ directory = "speeches"
 files_names = list_of_files(directory, "txt")
 
 # Affichage de la liste des fichiers
-print(files_names)
 
 
 def nom_president(files_names):
@@ -44,18 +41,22 @@ def prenom(president_names):
     # Dictionnaire associant les noms de président à leurs prénoms respectifs
     president_f_name = {
         'Chirac': 'Jacques',
-        'Giscard': 'Valéry',
+        'GiscarddEstaing': 'Valéry',
         'Mitterrand': 'François',
         'Macron': 'Emmanuel',
-        'Sarkozy': 'Nicolas'
+        'Sarkozy': 'Nicolas',
+        'Hollande':'François'
+
     }
     # Utilisation d'une compréhension de liste pour créer une liste des prénoms complets
-    return [name + ' ' + president_f_name[name] for name in president_names]
+    for name in president_names:
+        print(name + ' ' + president_f_name[name])
 
 
 # Appel de la fonction prenom avec la liste des noms de présidents
-president_first_names = prenom(nom_president())
-print(president_first_names)
+p=nom_president(files_names)
+president_first_names = prenom(p)
+
 
 
 def minuscule(dossier_entree, dossier_sortie):
@@ -92,9 +93,9 @@ def cleaned(dossier):
             contenu = file.read()
             new_content = ""
             for caractere in contenu:
-                if caractere in [',', ';', '.', ':', '?', '!']:
+                if caractere in [',', ';', '.', ':', '?', '!','-']:
                     new_content += ''
-                elif caractere in ['\n', '.', "'"]:
+                elif caractere in ['', '.', "'",]:
                     new_content += ' '
                 else:
                     new_content += caractere
@@ -105,7 +106,7 @@ def cleaned(dossier):
 
 # Appel de la fonction cleaned
 dossier = "cleaned"
-cleaned(dossier)
+#cleaned(dossier)
 
 
 def tf_score(dossier):
@@ -146,8 +147,7 @@ def idf(dossier):
                     dico[mot] += 1
     dico_idf = {}
     for mot, valeur in dico.items():
-        dico_idf[mot] = math.log10(total_doc / (valeur + 1))
-    print(dico_idf)
+        dico_idf[mot] = math.log(total_doc / (valeur+1))
     return dico_idf
 
 
@@ -157,22 +157,20 @@ resultat_idf = idf(dossier_idf)
 print(resultat_idf)
 
 
-def tf_idf(dossier, filepath=None, idf=None):
-    idf_score = idf(dossier)
-    tf_idf = {}
-    for filename in os.listdir(dossier):
-        filepatn = os.path.join(directory, filename)
-        with open(filepath, 'r', enconding='utf-8') as file:
-            contenu = file.read()
-        tf_s = tf_score(contenu)
-        tf_idf[filename] = {}
-        for mot, tf in tf_s.items():
-            idf = idf_score.get(mot, 1)
-            tfidf = tf * math.log(len(tf_idf) / idf)
-            tf_idf[filename][mot] = tfidf
-    return tf_idf
+def tf_idf(tf,idf):
+    matrice=[]
+    i = 0
+    for mots in idf:#parcour les mots dans le dico
+        matrice.append([])
+        for fichier in range(len(tf)):
+            if mots in tf[fichier]:
+                matrice[i].append(tf[fichier][mots]*idf[mots])
+            else:
+                matrice[i].append(0.0)
+        i += 1
+    return matrice
 
-
+tf_idf_score = (tf_idf(resultat_tf,resultat_idf))
 def least_important_words(tf_idf_scores):
     # Créer un ensemble pour stocker les mots qui ont TF-IDF = 0 dans tous les fichiers
     zero_tfidf_words = set(tf_idf_scores[tf_idf_scores.columns[0]].index)
@@ -180,27 +178,17 @@ def least_important_words(tf_idf_scores):
     # Itérez sur les scores TF-IDF de chaque fichier
     for column in tf_idf_scores.columns[1:]:
         # Mettez à jour l’ensemble avec les mots dont TF-IDF = 0 dans le fichier actuel
-        zero_tfidf_words &= set(tf_idf_scores[column][tf_idf_scores[column] == 0].index)
+        zero_tfidf_words = set(tf_idf_scores[column][tf_idf_scores[column] == 0].index)
 
     return zero_tfidf_words
 
 
 # appel de la fonction:
-tf_idf_scores = tf_idf("cleaned", idf=resultat_idf)
+tf_idf_scores= tf_idf()
 least_important_words_list = least_important_words(tf_idf_scores)
-print("Least Important Words:", least_important_words_list)
-
-
-def mot_repete_Chirac(tf_scores, president_name):
-    # Filtrer TF scores pour les presidents specifiques
-    president_tf_scores = tf_scores[tf_scores.index.str.contains(president_name, case=False)]
-
-    # Trouvez les mots avec le score TF le plus élevé pour la présidente spécifiée
-    most_repeated_words = president_tf_scores.idxmax(axis=0)
-
-    return most_repeated_words
+#print("Least Important Words:", least_important_words_list)
 
 
 # Appel de la fonction:
-chirac= mot_repete_Chirac(tf_score, "Chirac")
-print("Les mots les plus repetes de Chirac sont", chirac)
+#chirac= mot_repete_Chirac(tf_score, "Chirac")
+#print("Les mots les plus repetes de Chirac sont", chirac)
