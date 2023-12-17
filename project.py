@@ -1,5 +1,7 @@
-import math
 import os
+import math
+
+
 
 def list_of_files(directory, extension):
     # Création d'une liste pour stocker les noms de fichiers avec l'extension spécifiée
@@ -114,10 +116,10 @@ def tf_score(dossier):
     liste_tf = []
     for fichier in os.listdir(dossier):
         fichier_entree = os.path.join(dossier, fichier)
+        dico = {}
         with open(fichier_entree, 'r') as file:
             contenu = file.read()
             contenu = contenu.split()
-            dico = {}
             for mot in contenu:
                 if mot not in dico:
                     dico[mot] = 0
@@ -160,35 +162,156 @@ print(resultat_idf)
 def tf_idf(tf,idf):
     matrice=[]
     i = 0
-    for mots in idf:#parcour les mots dans le dico
+    for mots in idf:#parcour les mots(ligne) dans le dico,car on doit parcourir pour chaque fichier le mot du fichier donc pour chaque colonne la ligne.Le nombre de lignes de la matrice résultante doit être égal au nombre de mots uniques dans tous les
+#fichiers
         matrice.append([])
-        for fichier in range(len(tf)):
-            if mots in tf[fichier]:
-                matrice[i].append(tf[fichier][mots]*idf[mots])
+        for fichier in range(len(tf)):#t le nombre de colonnes doit être égal au nombre de fichiers se trouvant dans le répertoire .Parcourir tout les fichier du mot correspondant
+            if mots in tf[fichier]:#si le mot correspond au tf du fichier cest a dire si il se trouve dans le dico tf on lappend a la matrice
+                matrice[i].append(tf[fichier][mots.value]*idf[mots.value])
             else:
-                matrice[i].append(0.0)
-        i += 1
+                matrice[i].append(0.0)#les mots ne sont pas dans le premier fichier
+        i += 1 #aller a la ligne suivante de la matrice donc de
     return matrice
 
 tf_idf_score = (tf_idf(resultat_tf,resultat_idf))
-def least_important_words(tf_idf_scores):
-    # Créer un ensemble pour stocker les mots qui ont TF-IDF = 0 dans tous les fichiers
-    zero_tfidf_words = set(tf_idf_scores[tf_idf_scores.columns[0]].index)
-
-    # Itérez sur les scores TF-IDF de chaque fichier
-    for column in tf_idf_scores.columns[1:]:
-        # Mettez à jour l’ensemble avec les mots dont TF-IDF = 0 dans le fichier actuel
-        zero_tfidf_words = set(tf_idf_scores[column][tf_idf_scores[column] == 0].index)
-
-    return zero_tfidf_words
 
 
-# appel de la fonction:
-tf_idf_scores= tf_idf()
-least_important_words_list = least_important_words(tf_idf_scores)
-#print("Least Important Words:", least_important_words_list)
 
 
-# Appel de la fonction:
-#chirac= mot_repete_Chirac(tf_score, "Chirac")
-#print("Les mots les plus repetes de Chirac sont", chirac)
+def liste_moins_importants(tf_idf,tf_score):
+    liste=[]
+    i=0
+
+    for ligne in tf_idf:
+
+
+        compteur = 0
+
+        for score in ligne:
+            if tf_idf[ligne][score]==0.0:
+                compteur+=1
+        #reprensente le nombre de mots
+
+        if compteur==len(ligne):#si la longuer de la ligne est egale au compteur du mot
+            liste.append((tf_score[i].key()))#i reprensente la ligne donc le mot quon doit ajouter a la liste
+        i = i + 1#reprensente le nombre de mots
+    return liste
+def mot_max_tf(tf,tf_idf):
+    mots_max_tf = []
+    for fichier_tf in tf:
+        mots = list(fichier_tf.keys())
+        mot_max = mots[0]  # Initialisation avec le premier mot
+        score_max = tf_idf[mot_max]
+
+        for mot in mots:
+            if tf_idf[mot] > score_max:
+                mot_max = mot
+                score_max = tf_idf[mot]
+
+        mots_max_tf.append((mot_max, score_max))
+
+    return mots_max_tf
+def mot_max_tf(tf_score,tf_idf):
+    mots_max_tf = []
+
+    for i,fichier_tf in enumerate(tf_score):
+        somme = 0
+
+        mot=list(fichier_tf.keys())
+        mots_max=mot[0]
+        score_max = tf_idf[i][0]
+
+        for score in tf_idf[i]:
+            somme=somme + score
+            if somme > score_max:
+                score_max = somme
+                mot_max = mot[tf_idf[i].index(score)]
+
+        mots_max_tf.append((mot_max))
+
+    return mots_max_tf
+
+
+
+
+
+
+
+def mots_repetes_chirac(dossier,resultat_tf_idf):
+    liste_mots_non_importants = liste_moins_importants(tf_idf, tf_score(dossier))
+    mots_repetes = []
+
+    for fichier in os.listdir(dossier):
+        if fichier == nom_president('Chirac'):
+            fichier_entree = os.path.join(dossier, fichier)
+            with open(fichier_entree, 'r') as file:
+                contenu = file.read().split()  # Sépare le contenu en mots
+                word_count = tf_score(fichier_entree)#prendre le tf des mots du fichier
+
+                mot_max = max(word_count, key=word_count.get)
+
+                if mot_max not in liste_mots_non_importants:
+                    mots_repetes.append(mot_max)
+
+    return mots_repetes
+
+# Exemple d'utilisation
+dossier = "cleaned"
+
+
+resultat_tf = tf_score(dossier_tf)
+resultat_idf = idf(dossier_idf)
+resultat_tf_idf = tf_idf(resultat_tf, resultat_idf)
+resultat_mots_repetes_chirac = mots_repetes_chirac(dossier_tf, resultat_tf_idf)
+print(resultat_mots_repetes_chirac)
+
+
+#####################        ###############################PARTIE II
+
+def tokenisation(question):
+    liste = []
+    contenu = question.split()
+
+    for mot in contenu:
+        mot_traite = ""
+        for char in mot:
+            if char.isalpha() or char == "'":
+                mot_traite += char.lower()
+
+        if mot_traite:
+            liste.append(mot_traite)
+
+    return liste
+
+# Exemple d'utilisation
+question = "Quelle est votre nom aujourd'hui"
+resultat_tokenisation = tokenisation(question)
+
+print("Question originale:", question)
+print("Liste des mots tokenisés:", resultat_tokenisation)
+
+
+def indentification_termes(question):
+    mots_questions=set(tokenisation(question))#cree un enesemble avec les mots de la questions separer
+    mots_corpus=set()#initialisation dun esemble vide des mots du corpus
+
+    for fichier in os.listdir(dossier):#parcourir les fichiers dans le corpus
+        chemin_fichier=os.path.join(dossier,fichier)#rejoindre le fichier au chemin
+        with open(chemin_fichier,'r') as file:
+            contenu_doc=file.read()
+            mots_corpus.update(tokenisation(contenu_doc))#permettre de mettre a jour la variable mot_corpus avec tout les mots du fichiers
+
+    mots_commun=mots_questions.intersection(mots_corpus)
+
+    return mots_commun
+# Exemple d'utilisation
+question = "Quelle est votre nom aujourd'hui"
+dossier= "cleaned"
+
+resultat_intersection = indentification_termes(question, dossier)
+
+print("Question originale:", question)
+print("Termes communs avec le corpus:", resultat_intersection)
+
+#3
+
