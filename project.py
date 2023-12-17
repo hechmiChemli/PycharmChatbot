@@ -314,4 +314,44 @@ print("Question originale:", question)
 print("Termes communs avec le corpus:", resultat_intersection)
 
 #3
+import os
+import math
+
+def tf_idf_question(question, tf_scores, idf_scores):
+    # Tokenisation de la question
+    mots_question = tokenisation(question)
+
+    # Initialisation du vecteur TF-IDF de la question
+    vecteur_tfidf_question = []
+
+    # Calcul du score TF pour chaque mot de la question
+    for mot in mots_question:
+        tf_score_mot = mots_question.count(mot)
+        vecteur_tfidf_question.append(tf_score_mot)
+
+    # Mise à zéro pour les mots du corpus absents de la question dans tous les fichiers
+    for fichier_tf in tf_scores:
+        for mot_corpus in fichier_tf:
+            if mot_corpus not in mots_question:
+                fichier_tf[mot_corpus] = 0
+
+    # Multiplication par les scores IDF
+    for i in range(len(vecteur_tfidf_question)):
+        vecteur_tfidf_question[i] *= idf_scores.get(mots_question[i], 0)
+
+    return vecteur_tfidf_question
+
+# Exemple d'utilisation
+dossier_corpus = "cleaned"
+question = "Quelle est votre nom aujourd'hui"
+
+# Calcul des scores TF
+resultat_tf = tf_score(dossier_corpus)
+
+# Calcul des scores IDF
+resultat_idf = idf(dossier_corpus)
+
+# Calcul du vecteur TF-IDF de la question
+vecteur_tfidf_question = tf_idf_question(question, resultat_tf, resultat_idf)
+print("Vecteur TF-IDF de la question:", vecteur_tfidf_question)
 
