@@ -3,6 +3,7 @@ import math
 
 
 
+
 def list_of_files(directory, extension):
     # Création d'une liste pour stocker les noms de fichiers avec l'extension spécifiée
     files_names = []
@@ -167,18 +168,17 @@ def tf_idf(tf,idf):
         matrice.append([])
         for fichier in range(len(tf)):#t le nombre de colonnes doit être égal au nombre de fichiers se trouvant dans le répertoire .Parcourir tout les fichier du mot correspondant
             if mots in tf[fichier]:#si le mot correspond au tf du fichier cest a dire si il se trouve dans le dico tf on lappend a la matrice
-                matrice[i].append(tf[fichier][mots.value]*idf[mots.value])
+                matrice[i].append(tf[fichier][mots]*idf[mots])
             else:
                 matrice[i].append(0.0)#les mots ne sont pas dans le premier fichier
         i += 1 #aller a la ligne suivante de la matrice donc de
     return matrice
 
-tf_idf_score = (tf_idf(resultat_tf,resultat_idf))
 
 
 
 
-def liste_moins_importants(tf_idf,tf_score):
+def liste_moins_importants(tf_idf: object, tf_score: object) -> object:
     liste=[]
     i=0
 
@@ -237,8 +237,8 @@ def mot_max_tf(tf_score,tf_idf):
 
 
 
-def mots_repetes_chirac(dossier,resultat_tf_idf):
-    liste_mots_non_importants = liste_moins_importants(tf_idf, tf_score(dossier))
+def mots_repetes_chirac(dossier,tf_idf):
+    liste_mots_non_importants = liste_moins_importants(tf_idf, tf_score)
     mots_repetes = []
 
     for fichier in os.listdir(dossier):
@@ -254,16 +254,11 @@ def mots_repetes_chirac(dossier,resultat_tf_idf):
                     mots_repetes.append(mot_max)
 
     return mots_repetes
-
-# Exemple d'utilisation
-dossier = "cleaned"
+dossier="cleaned"
 
 
-resultat_tf = tf_score(dossier_tf)
-resultat_idf = idf(dossier_idf)
-resultat_tf_idf = tf_idf(resultat_tf, resultat_idf)
-resultat_mots_repetes_chirac = mots_repetes_chirac(dossier_tf, resultat_tf_idf)
-print(resultat_mots_repetes_chirac)
+
+
 
 
 #####################        ###############################PARTIE II
@@ -304,20 +299,14 @@ def indentification_termes(question):
     mots_commun=mots_questions.intersection(mots_corpus)
 
     return mots_commun
-# Exemple d'utilisation
-question = "Quelle est votre nom aujourd'hui"
-dossier= "cleaned"
+dossier="cleaned"
+question="Quelle est votre nom aujourd'hui"
+resulat_mots_commun=indentification_termes(question)
+print(resulat_mots_commun)
 
-resultat_intersection = indentification_termes(question, dossier)
-
-print("Question originale:", question)
-print("Termes communs avec le corpus:", resultat_intersection)
 
 #3
-import os
-import math
-
-def tf_idf_question(question, tf_scores, idf_scores):
+def tf_idf_question(question, tf_score, idf_scores):
     # Tokenisation de la question
     mots_question = tokenisation(question)
 
@@ -326,32 +315,136 @@ def tf_idf_question(question, tf_scores, idf_scores):
 
     # Calcul du score TF pour chaque mot de la question
     for mot in mots_question:
+        # Fréquence du mot dans la question
         tf_score_mot = mots_question.count(mot)
-        vecteur_tfidf_question.append(tf_score_mot)
+        condition = False
 
-    # Mise à zéro pour les mots du corpus absents de la question dans tous les fichiers
-    for fichier_tf in tf_scores:
-        for mot_corpus in fichier_tf:
-            if mot_corpus not in mots_question:
-                fichier_tf[mot_corpus] = 0
+        # Vérification de la présence du mot dans les fichiers du corpus
+        for fichier_tf in tf_score:
+            if mot in fichier_tf:
+                condition = True
+                break
 
-    # Multiplication par les scores IDF
-    for i in range(len(vecteur_tfidf_question)):
-        vecteur_tfidf_question[i] *= idf_scores.get(mots_question[i], 0)
+        # Ajouter le score TF du mot dans chaque fichier
+        if condition:
+            tfidf_score = tf_score_mot * idf_scores.get(mot, 0)
+        else:
+            tfidf_score = 0
+        vecteur_tfidf_question.append(tfidf_score)
 
     return vecteur_tfidf_question
+dossier="cleaned"
+question="Quelle est votre nom aujourd'hui"
+tf_score=tf_score(dossier)
+idf_scores=idf(dossier)
+resultat=tf_idf_question(question, tf_score, idf_scores)
+print(resultat)
+
+
+#4
+def produit_scalaire(vecteur_a, vecteur_b):
+    return sum(a * b for a, b in zip(vecteur_a, vecteur_b))
+
+
+def norme_vecteur(vecteur):
+    return math.sqrt(sum(a**2 for a in vecteur))
+
+def similarite_cosinus(vecteur_a, vecteur_b):
+    produit = produit_scalaire(vecteur_a, vecteur_b)
+    norme_a = norme_vecteur(vecteur_a)
+    norme_b = norme_vecteur(vecteur_b)
+
+    if norme_a == 0 or norme_b == 0:
+        return 0  # Éviter une division par zéro
+
+    return produit / (norme_a * norme_b)
+#5
+def document_pertinent(tf_idf_corpus, vecteur_tfidf_question, noms_fichiers):
+    nom_document_pertinent = None
+    similarite_max = -1  # Initialisation avec une valeur minimale car le cos est entre -1 et 1
+
+    for i, vecteur_tfidf_corpus in enumerate(tf_idf_corpus):#La boucle for i, vecteur_tfidf_corpus in enumerate(tf_idf_corpus) parcourt chaque vecteur du corpus, où i est l'indice du vecteur dans la liste tf_idf_corpus.
+        # On calcule la similarité de cosinus pour chaque mot
+        sim = similarite_cosinus(vecteur_tfidf_question, vecteur_tfidf_corpus)#calculer la similarité entre les vecteurs tf_idf de la question et vecteur tf_idf du corpus
+#La similarité de cosinus mesure l'angle entre deux vecteurs dans un espace vectoriel. Plus l'angle est petit, plus la similarité de cosinus est élevée, ce qui indique une plus grande similarité entre les deux vecteurs.
+        # On garde le nom du document ayant la plus grande similarité
+        #chercher la similarité maximum
+        if sim > similarite_max:
+            similarite_max = sim
+            nom_document_pertinent = noms_fichiers[i]#chercher le document le plus pertinent .i représente l'indice du vecteur dans la liste des noms des fichiers (noms_fichiers).Ainsi ,noms_fichiers[i] récupère le nom du fichier associé au vecteur du corpus actuellement traité
+
+    return nom_document_pertinent
+#6
+#Dans le vecteur TF-IDF de la question, repérer le mot ayant le score TF-IDF le plus élevé et le retourner.
+#essayons de trouver le vocabulaire de tf_idf_questions,cest a dire la liste
+def obtenir_vocabulaire_mot(tf_idf_question, mots_question):
+    # Créer un dictionnaire pour stocker le vocabulaire de la question avec les scores TF-IDF
+    vocabulaire = {}
+
+    # Parcourir chaque mot dans la question et associer le score TF-IDF
+    if len(mots_question)==len(tf_idf_question):#il faut sassurer que la longueur de mots_question correspond à la longueur de tf_idf_question
+        for i, mot in enumerate(mots_question):
+            vocabulaire[mot] = tf_idf_question[i]#chaque mot de vocabulaire contiendra son tf_idf_questions
+
+    return vocabulaire
+# Exemple d'utilisation
+question = "Votre question ici"
+tf_idf_question = tf_idf_question(question, tf_score, idf_scores)
+mots_question = tokenisation(question)
+
+vocabulaire_question = obtenir_vocabulaire_mot(tf_idf_question, mots_question)
+print(vocabulaire_question)
+
+def obtenir_mot_remarquable(tf_idf_question):
+    # Obtenez le vocabulaire de la question
+    vocabulaire =obtenir_vocabulaire_mot(tf_idf_question,question)
+
+    # Obtenez le mot ayant le score TF-IDF le plus élevé
+    mot_remarquable = max(vocabulaire, key=tf_idf_question.get)
+
+    return mot_remarquable
+
+
+
+
+dossier = "cleaned"
+tf_scores = tf_score(dossier)
+idf_scores = idf(dossier)
+question = "Votre question ici"
+resultat = tf_idf_question(question, tf_scores, idf_scores)
+mot_remarquable_question = obtenir_mot_remarquable(resultat)
+print(mot_remarquable_question)
+
+def generer_reponse(question):
+    question = question.lower()  # Convertir la question en minuscules pour faciliter la comparaison
+
+    if "comment" in question:
+        reponse = "Après analyse, votre réponse ici."
+    elif "pourquoi" in question:
+        reponse = "Car, votre réponse ici."
+    elif "peux-tu" in question:
+        reponse = "Oui, bien sûr! Votre réponse ici."
+    else:
+        reponse = "Je ne suis pas sûr de comprendre la question. Pouvez-vous reformuler?"
+
+    # Mise en forme de la réponse
+    reponse = reponse.capitalize()  # Mettre en majuscule la première lettre
+    reponse += " Merci de poser cette question."
+
+    return reponse
 
 # Exemple d'utilisation
-dossier_corpus = "cleaned"
-question = "Quelle est votre nom aujourd'hui"
+question_posee = "Pourquoi le ciel est-il bleu?"
+reponse_generee = generer_reponse(question_posee)
+print(reponse_generee)
 
-# Calcul des scores TF
-resultat_tf = tf_score(dossier_corpus)
 
-# Calcul des scores IDF
-resultat_idf = idf(dossier_corpus)
 
-# Calcul du vecteur TF-IDF de la question
-vecteur_tfidf_question = tf_idf_question(question, resultat_tf, resultat_idf)
-print("Vecteur TF-IDF de la question:", vecteur_tfidf_question)
+
+
+
+
+
+
+
 
