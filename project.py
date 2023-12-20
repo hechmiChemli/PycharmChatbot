@@ -113,7 +113,6 @@ dossier = "cleaned"
 
 
 def calcul_tf(dossier):
-    # Liste pour stocker les dictionnaires de scores TF pour chaque fichier
     liste_tf = []
     for fichier in os.listdir(dossier):
         fichier_entree = os.path.join(dossier, fichier)
@@ -121,13 +120,15 @@ def calcul_tf(dossier):
         with open(fichier_entree, 'r') as file:
             contenu = file.read()
             contenu = contenu.split()
+            total_mots = len(contenu)
             for mot in contenu:
                 if mot not in dico:
-                    dico[mot] = 0
+                    dico[mot] = 1
                 else:
                     dico[mot] += 1
             liste_tf.append(dico)
     return liste_tf
+
 
 
 # Appel de la fonction tf_score
@@ -135,7 +136,6 @@ dossier_tf = "cleaned"  # Modification du dossier selon vos commentaires
 resultat_tf = calcul_tf(dossier_tf)
 print(resultat_tf)
 def calcul_idf(dossier):
-    # ... implémentation de la fonction idf
     dico = {}
     total_doc = len(os.listdir(dossier))
     for fichier in os.listdir(dossier):
@@ -144,13 +144,15 @@ def calcul_idf(dossier):
             mots = set(contenu.split())
             for mot in mots:
                 if mot not in dico:
-                    dico[mot] = 0
+                    dico[mot] = 1
                 else:
                     dico[mot] += 1
+
     dico_idf = {}
     for mot, valeur in dico.items():
-        dico_idf[mot] = math.log(total_doc / (valeur + 1))
+        dico_idf[mot] = math.log(total_doc / (valeur + 1))  # Ajout de 1 pour éviter une division par zéro
     return dico_idf
+
 # Appel de la fonction idf
 dossier="cleaned"
 resultat_idf = calcul_idf(dossier)
@@ -158,10 +160,6 @@ print(resultat_idf)
 
 
 # Utilisez le nouveau nom de fonction
-
-
-
-
 
 
 
@@ -177,7 +175,7 @@ def tf_idf(tf, idf):
                 matrice[i].append(tf[fichier][mot] * idf[mot])
             else:
                 matrice[i].append(0.0)
-        i += 1
+        i += 1#i correspond a la ligne
     return matrice
 
 dossier = "cleaned"
@@ -186,35 +184,43 @@ idf_scores = calcul_idf(dossier)
 
 resultat = tf_idf(tf, idf_scores)  # Utilisez le même nom ici
 print("La matrice tf idf est :",resultat)
+def afficher_matrice(matrice):
+    for ligne in matrice:
+        for valeur in ligne:
+            print(f"{valeur:.4f}\t", end="")
+        print()  # Saut de ligne après chaque ligne
+
+dossier = "cleaned"
+tf = calcul_tf(dossier)
+idf_scores = calcul_idf(dossier)
+resultat = tf_idf(tf, idf_scores)
+
+print("La matrice TF-IDF est :")
+afficher_matrice(resultat)
 
 
 
 
 
 
-def liste_moins_importants(tf_idf, tf_score) :
-    def liste_moins_importants(tf_idf, tf_score):
-        liste = []
-
-        for i, ligne in enumerate(tf_idf):
-            compteur = 0
-
-            for score in ligne:
-                if score == 0.0:
-                    compteur += 1
-
-            if compteur == len(ligne):  # si la longueur de la ligne est égale au compteur du mot
-                liste.append(list(tf_score[i].keys())[0])
-
-        return liste
 
 
-dossier="cleaned"
-tf=calcul_tf(dossier)
-idf_score=calcul_idf(dossier)
-resultat_tf_idf=tf_idf(tf,idf_score)
-resultat=liste_moins_importants(resultat_tf_idf,tf)
-print(resultat)
+def liste_moins_importants(tf_idf, tf_score):
+    liste = []
+
+    for i, ligne in enumerate(tf_idf):# i= 'indice de la ligne courante lors de la boucle
+        compteur = 0
+
+        for score in ligne:
+            if score == 0.0:
+                compteur += 1
+
+        if compteur == len(ligne):  # si la longueur de la ligne est égale au compteur du mot
+            liste.append(list(tf_score[i].keys())[0])
+
+    return liste
+
+
 def mot_max_tf(tf,tf_idf):
     mots_max_tf = []
     for fichier_tf in tf:
@@ -222,12 +228,12 @@ def mot_max_tf(tf,tf_idf):
         mot_max = mots[0]  # Initialisation avec le premier mot
         score_max = tf_idf[mot_max]
 
-        for mot in mots:
+        for mot in mots:#chercher le mot max et le tf_idf max du mot
             if tf_idf[mot] > score_max:
                 mot_max = mot
                 score_max = tf_idf[mot]
 
-        mots_max_tf.append((mot_max, score_max))
+        mots_max_tf.append((mot_max, score_max))#append un tuple contenant les mots max et ces valeurs
 
 
     return mots_max_tf
@@ -239,7 +245,7 @@ resultat_mot=mot_max_tf(tf,idf_score)
 print(resultat_mot)
 
 def mots_repetes_chirac(dossier,tf_idf):
-    liste_mots_non_importants = liste_moins_importants(tf_idf, tf_score)
+
     mots_repetes = []
 
     for fichier in os.listdir(dossier):
@@ -256,6 +262,10 @@ def mots_repetes_chirac(dossier,tf_idf):
 
     return mots_repetes
 dossier="cleaned"
+tf=calcul_tf(dossier)
+idf_score=calcul_idf(dossier)
+resultat_tf_idf=tf_idf(tf,idf_score)
+
 
 
 
@@ -268,11 +278,11 @@ def tokenisation(question):
     liste = []
     contenu = question.split()
 
-    for mot in contenu:
+    for mot in contenu:#parcourir pour chaque mot
         mot_traite = ""
-        for char in mot:
+        for char in mot:#verifie pour chaque caractere si c'est de lalphabet ou "'"
             if char.isalpha() or char == "'":
-                mot_traite += char.lower()
+                mot_traite += char.lower()#mettre en minuscule
 
         if mot_traite:
             liste.append(mot_traite)
@@ -310,7 +320,6 @@ print(resulat_mots_commun)
 def calcul_tf_idf_question(question, tf_score, idf_scores):
     # Tokenisation de la question
     mots_question = tokenisation(question)
-
     # Initialisation du vecteur TF-IDF de la question
     vecteur_tfidf_question = []
 
@@ -375,6 +384,7 @@ def document_pertinent(tf_idf_corpus, vecteur_tfidf_question, noms_fichiers):
             nom_document_pertinent = noms_fichiers[i]#chercher le document le plus pertinent .i représente l'indice du vecteur dans la liste des noms des fichiers (noms_fichiers).Ainsi ,noms_fichiers[i] récupère le nom du fichier associé au vecteur du corpus actuellement traité
 
     return nom_document_pertinent
+
 #6
 #Dans le vecteur TF-IDF de la question, repérer le mot ayant le score TF-IDF le plus élevé et le retourner.
 #essayons de trouver le vocabulaire de tf_idf_questions,cest a dire la liste
