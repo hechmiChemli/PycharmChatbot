@@ -112,7 +112,7 @@ dossier = "cleaned"
 #cleaned(dossier)
 
 
-def tf_score(dossier):
+def calcul_tf(dossier):
     # Liste pour stocker les dictionnaires de scores TF pour chaque fichier
     liste_tf = []
     for fichier in os.listdir(dossier):
@@ -132,11 +132,10 @@ def tf_score(dossier):
 
 # Appel de la fonction tf_score
 dossier_tf = "cleaned"  # Modification du dossier selon vos commentaires
-resultat_tf = tf_score(dossier_tf)
+resultat_tf = calcul_tf(dossier_tf)
 print(resultat_tf)
-
-
-def idf(dossier):
+def calcul_idf(dossier):
+    # ... implémentation de la fonction idf
     dico = {}
     total_doc = len(os.listdir(dossier))
     for fichier in os.listdir(dossier):
@@ -150,52 +149,72 @@ def idf(dossier):
                     dico[mot] += 1
     dico_idf = {}
     for mot, valeur in dico.items():
-        dico_idf[mot] = math.log(total_doc / (valeur+1))
+        dico_idf[mot] = math.log(total_doc / (valeur + 1))
     return dico_idf
-
-
 # Appel de la fonction idf
-dossier_idf = "cleaned"
-resultat_idf = idf(dossier_idf)
+dossier="cleaned"
+resultat_idf = calcul_idf(dossier)
 print(resultat_idf)
 
 
-def tf_idf(tf,idf):
-    matrice=[]
+# Utilisez le nouveau nom de fonction
+
+
+
+
+
+
+
+
+
+def tf_idf(tf, idf):
+    matrice = []
     i = 0
-    for mots in idf:#parcour les mots(ligne) dans le dico,car on doit parcourir pour chaque fichier le mot du fichier donc pour chaque colonne la ligne.Le nombre de lignes de la matrice résultante doit être égal au nombre de mots uniques dans tous les
-#fichiers
+    for mot in idf:
         matrice.append([])
-        for fichier in range(len(tf)):#t le nombre de colonnes doit être égal au nombre de fichiers se trouvant dans le répertoire .Parcourir tout les fichier du mot correspondant
-            if mots in tf[fichier]:#si le mot correspond au tf du fichier cest a dire si il se trouve dans le dico tf on lappend a la matrice
-                matrice[i].append(tf[fichier][mots]*idf[mots])
+        for fichier in range(len(tf)):
+            if mot in tf[fichier]:
+                matrice[i].append(tf[fichier][mot] * idf[mot])
             else:
-                matrice[i].append(0.0)#les mots ne sont pas dans le premier fichier
-        i += 1 #aller a la ligne suivante de la matrice donc de
+                matrice[i].append(0.0)
+        i += 1
     return matrice
 
+dossier = "cleaned"
+tf = calcul_tf(dossier)
+idf_scores = calcul_idf(dossier)
+
+resultat = tf_idf(tf, idf_scores)  # Utilisez le même nom ici
+print("La matrice tf idf est :",resultat)
 
 
 
 
-def liste_moins_importants(tf_idf: object, tf_score: object) -> object:
-    liste=[]
-    i=0
-
-    for ligne in tf_idf:
 
 
-        compteur = 0
+def liste_moins_importants(tf_idf, tf_score) :
+    def liste_moins_importants(tf_idf, tf_score):
+        liste = []
 
-        for score in ligne:
-            if tf_idf[ligne][score]==0.0:
-                compteur+=1
-        #reprensente le nombre de mots
+        for i, ligne in enumerate(tf_idf):
+            compteur = 0
 
-        if compteur==len(ligne):#si la longuer de la ligne est egale au compteur du mot
-            liste.append((tf_score[i].key()))#i reprensente la ligne donc le mot quon doit ajouter a la liste
-        i = i + 1#reprensente le nombre de mots
-    return liste
+            for score in ligne:
+                if score == 0.0:
+                    compteur += 1
+
+            if compteur == len(ligne):  # si la longueur de la ligne est égale au compteur du mot
+                liste.append(list(tf_score[i].keys())[0])
+
+        return liste
+
+
+dossier="cleaned"
+tf=calcul_tf(dossier)
+idf_score=calcul_idf(dossier)
+resultat_tf_idf=tf_idf(tf,idf_score)
+resultat=liste_moins_importants(resultat_tf_idf,tf)
+print(resultat)
 def mot_max_tf(tf,tf_idf):
     mots_max_tf = []
     for fichier_tf in tf:
@@ -210,32 +229,14 @@ def mot_max_tf(tf,tf_idf):
 
         mots_max_tf.append((mot_max, score_max))
 
-    return mots_max_tf
-def mot_max_tf(tf_score,tf_idf):
-    mots_max_tf = []
-
-    for i,fichier_tf in enumerate(tf_score):
-        somme = 0
-
-        mot=list(fichier_tf.keys())
-        mots_max=mot[0]
-        score_max = tf_idf[i][0]
-
-        for score in tf_idf[i]:
-            somme=somme + score
-            if somme > score_max:
-                score_max = somme
-                mot_max = mot[tf_idf[i].index(score)]
-
-        mots_max_tf.append((mot_max))
 
     return mots_max_tf
-
-
-
-
-
-
+dossier="cleaned"
+tf=calcul_tf(dossier)
+idf_score=calcul_idf(dossier)
+resultat_tf_idf=tf_idf(tf,idf_score)
+resultat_mot=mot_max_tf(tf,idf_score)
+print(resultat_mot)
 
 def mots_repetes_chirac(dossier,tf_idf):
     liste_mots_non_importants = liste_moins_importants(tf_idf, tf_score)
@@ -306,7 +307,7 @@ print(resulat_mots_commun)
 
 
 #3
-def tf_idf_question(question, tf_score, idf_scores):
+def calcul_tf_idf_question(question, tf_score, idf_scores):
     # Tokenisation de la question
     mots_question = tokenisation(question)
 
@@ -335,10 +336,10 @@ def tf_idf_question(question, tf_score, idf_scores):
     return vecteur_tfidf_question
 dossier="cleaned"
 question="Quelle est votre nom aujourd'hui"
-tf_score=tf_score(dossier)
-idf_scores=idf(dossier)
-resultat=tf_idf_question(question, tf_score, idf_scores)
-print(resultat)
+tf_score=calcul_tf(dossier)
+idf_scores=calcul_idf(dossier)
+resultat=calcul_tf_idf_question(question, tf_score, idf_scores)
+print("le vecteur  tf_idf de la question est :",resultat)
 
 
 #4
@@ -389,31 +390,32 @@ def obtenir_vocabulaire_mot(tf_idf_question, mots_question):
     return vocabulaire
 # Exemple d'utilisation
 question = "Votre question ici"
-tf_idf_question = tf_idf_question(question, tf_score, idf_scores)
+tf_idf_question = calcul_tf_idf_question(question, tf_score, idf_scores)
 mots_question = tokenisation(question)
 
 vocabulaire_question = obtenir_vocabulaire_mot(tf_idf_question, mots_question)
-print(vocabulaire_question)
+print("le vocabulaire de la question est",vocabulaire_question)
 
-def obtenir_mot_remarquable(tf_idf_question):
+def obtenir_mot_remarquable(tf_idf_question, question):
     # Obtenez le vocabulaire de la question
-    vocabulaire =obtenir_vocabulaire_mot(tf_idf_question,question)
+    vocabulaire = obtenir_vocabulaire_mot(tf_idf_question, tokenisation(question))
 
     # Obtenez le mot ayant le score TF-IDF le plus élevé
-    mot_remarquable = max(vocabulaire, key=tf_idf_question.get)
+    mot_remarquable = max(vocabulaire, key=vocabulaire.get)
 
     return mot_remarquable
 
-
-
-
+# Exemple d'utilisation
 dossier = "cleaned"
-tf_scores = tf_score(dossier)
-idf_scores = idf(dossier)
-question = "Votre question ici"
-resultat = tf_idf_question(question, tf_scores, idf_scores)
-mot_remarquable_question = obtenir_mot_remarquable(resultat)
-print(mot_remarquable_question)
+question_text = "Quelle est votre nom aujourd'hui"
+tf_score = calcul_tf(dossier)
+idf_scores = calcul_idf(dossier)
+resultat = calcul_tf_idf_question(question_text,tf_score,idf_scores)
+mot_remarquable_question = obtenir_mot_remarquable(resultat, question_text)
+print("Le mot remarquable de la question est :", mot_remarquable_question)
+
+
+
 
 def generer_reponse(question):
     question = question.lower()  # Convertir la question en minuscules pour faciliter la comparaison
